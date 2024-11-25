@@ -18,11 +18,11 @@ public class VerticalAIProcessor {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 3) {
-            System.err.println("Usage: VerticalAIProcessor <verticalName> <sprintNumber> <aiType>");
+            System.err.println("Usage: VerticalAIProcessor <verticalName> <tabName> <aiType>");
             System.exit(1);
         }
         String verticalName = args[0];
-        String sprintNumber = args[1];
+        String tabName = args[1];
         String aiType = args[2];
        /* PromptMapper mapper = new PromptMapper();
         List<List<String>> prompts = mapper.getPrompts(verticalName);
@@ -30,7 +30,7 @@ public class VerticalAIProcessor {
             throw new Exception("Prompt not defined for the given vertical name");
         }*/
         // Read the Google Sheet and store the values in a data structure
-        String sheetName = "Sprint " + sprintNumber;
+        String sheetName =  tabName;
         Map<Integer, Map<String, String>> data = null;
         try {
             data = GoogleSheetReader.readData(sheetName);
