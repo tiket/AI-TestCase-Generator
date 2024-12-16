@@ -3,10 +3,15 @@ package jira.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gSheet.GoogleSheetReader;
 import io.restassured.RestAssured;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import util.ConfigReader;
 
 public class JiraService {
+    private static final Logger logger = LogManager.getLogger(JiraService.class);
+
 
     public static String getTheRequirementFromJira(String JiraId) throws JsonProcessingException {
         //call the jira api to get all the content
@@ -57,7 +62,7 @@ public class JiraService {
             extractTextFromContentArray(descriptionNode.path("content"), descriptionText);
             return descriptionText.toString().trim();
         } else {
-            System.out.println("Description not found or is empty.");
+            logger.info("Description not found or is empty.");
             return null;
         }
     }

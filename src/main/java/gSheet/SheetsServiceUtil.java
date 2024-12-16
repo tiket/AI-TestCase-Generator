@@ -7,6 +7,8 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,9 +21,11 @@ public class SheetsServiceUtil {
     private static final String APPLICATION_NAME = "AI-BOT-POC";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance(); // Using JacksonFactory here for backward compatibility
     private static final String CREDENTIALS_FILE_PATH = "/oauth2.json";
+    private static final Logger logger = LogManager.getLogger(GoogleSheetReader.class);
+
 
     public static Sheets getSheetsService() throws IOException, GeneralSecurityException {
-        System.out.println("Working Directory: " + System.getProperty("user.dir"));
+        logger.info("Working Directory: " + System.getProperty("user.dir"));
         InputStream credentialsStream = SheetsServiceUtil.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (credentialsStream == null) {
             throw new FileNotFoundException("Credentials file not found: " + CREDENTIALS_FILE_PATH);

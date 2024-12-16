@@ -4,6 +4,8 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import util.ConfigReader;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ public class GoogleSheetReader {
 
     // Modify this data.constant with your spreadsheet ID
     private static final String SPREADSHEET_ID = ConfigReader.getValue("google.sheet.id").trim();
+    private static final Logger logger = LogManager.getLogger(GoogleSheetReader.class);
 
     public static Map<Integer, Map<String, String>> readData(String sheetName) throws IOException, GeneralSecurityException {
         Sheets service = SheetsServiceUtil.getSheetsService();
@@ -29,7 +32,7 @@ public class GoogleSheetReader {
         Map<Integer, Map<String, String>> data = new HashMap<>();
 
         if (values == null || values.isEmpty()) {
-            System.out.println("No data found.");
+            logger.info("No data found.");
         } else {
             List<Object> headerRow = values.get(0);
             int jiraIdIndex = headerRow.indexOf("JIRA ID");
@@ -51,7 +54,7 @@ public class GoogleSheetReader {
                     data.put(rowIndex, rowData);
                 }
             } else {
-                System.out.println("JIRA ID column not found.");
+                logger.info("JIRA ID column not found.");
             }
         }
         return data;

@@ -3,11 +3,14 @@ import ai.AICSVGenerator;
 import ai.AIClient;
 import ai.AIClientFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import data.PromptMapper;
 import gSheet.GoogleDocsReader;
 import gSheet.GoogleSheetReader;
 import jira.core.ConfluenceService;
 import jira.core.JiraService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import util.ConfigReader;
 
 import java.io.IOException;
@@ -15,26 +18,36 @@ import java.util.List;
 import java.util.Map;
 
 public class VerticalAIProcessor {
+    // Initialize the Logger
+    private static final Logger logger = LogManager.getLogger(VerticalAIProcessor.class);
+
 
     public static void main(String[] args) throws Exception {
         if (args.length < 3) {
-            System.err.println("Usage: VerticalAIProcessor <verticalName> <tabName> <aiType>");
+            logger.error("Usage: VerticalAIProcessor <verticalName> <tabName> <aiType>");
             System.exit(1);
         }
         String verticalName = args[0];
         String tabName = args[1];
         String aiType = args[2];
-       /* PromptMapper mapper = new PromptMapper();
-        List<List<String>> prompts = mapper.getPrompts(verticalName);
-        if (prompts == null || prompts.isEmpty()) {
-            throw new Exception("Prompt not defined for the given vertical name");
-        }*/
+
         // Read the Google Sheet and store the values in a data structure
         String sheetName =  tabName;
         Map<Integer, Map<String, String>> data = null;
         try {
             data = GoogleSheetReader.readData(sheetName);
-        } catch (Exception e) {
+        } catch (GoogleJsonResponseException e) {
+            if (e.getDetails() != null) {
+                int statusCode = e.getDetails().getCode();
+                if(statusCode==404){
+                    logger.error("Error Message: " + e.getDetails().getMessage());
+                    throw new IllegalArgumentException("Incorrect g-sheet id is provided");
+                }else if(statusCode==400){
+                    logger.error("Error Message: " + e.getDetails().getMessage());
+                    throw new IllegalArgumentException("Incorrect g-sheet tab name  is provided");
+                }
+            }
+        }catch (Exception e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Error in reading the master data sheet");
         }
@@ -61,7 +74,6 @@ public class VerticalAIProcessor {
                 String requirement = null;
                 try {
                     requirement = fetchRequirement(rowData, jiraId);
-                    //System.out.println("Rakesh : "+requirement);
                 } catch (Exception e) {
                     rowData.put("AI TC Status", "Error in reading the requirement from the source [Jira/Doc]");
                     e.printStackTrace();
@@ -73,7 +85,7 @@ public class VerticalAIProcessor {
                     AICSVGenerator.getResultFromAIAndGenerateCsvFile(requirement, prompts.get(1), jiraId, rowData, aiClient);
                 }
             } else {
-                System.out.println("Type not implemented or case is not ready for AI");
+                logger.info("Type not implemented or case is not ready for AI");
             }
         }
     }

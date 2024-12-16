@@ -49,9 +49,7 @@ public class GeminiClient implements AIClient{
                 .body(requestBody)
                 .log().all()
                 .post();
-        System.out.println("Response code: " + response.getStatusCode());
-        System.out.println("Response body: " + response.getBody().asString());
-        return response;
+          return response;
     }
 
     @Override
@@ -98,8 +96,6 @@ public class GeminiClient implements AIClient{
                 .body(updatedRequestBodyJson)
                 .log().all()
                 .post();
-        System.out.println("Response code: " + response.getStatusCode());
-        System.out.println("Response body: " + response.getBody().asString());
         return response;
     }
 

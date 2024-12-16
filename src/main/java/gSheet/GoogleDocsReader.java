@@ -2,8 +2,11 @@ package gSheet;
 
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import csv.CSVWriterUtil;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -18,6 +21,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GoogleDocsReader {
+
+    private static final Logger logger = LogManager.getLogger(GoogleDocsReader.class);
+
 
     private static final String CREDENTIALS_FILE_PATH = "/oauth2.json";
     // need to change this with ticket service account once api for doc is enabled , Need to raise a request to the tiket IT team .
@@ -58,7 +64,7 @@ public class GoogleDocsReader {
 
     private static Response getResponse(String documentUrl) throws IOException {
         String documentId = extractDocumentId(documentUrl);
-        System.out.println("document id is " + documentId);
+        logger.info("document id is " + documentId);
         String accessToken = getAccessToken();
         String url = "https://docs.googleapis.com/v1/documents/" + documentId;
         Response response = RestAssured

@@ -3,6 +3,8 @@ package gSheet;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.AppendValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -14,6 +16,8 @@ public class GoogleSheetsWriter {
     // Define the spreadsheet ID and range
     private static final String SPREADSHEET_ID = "1BWQExYzU6qvYF2jgrX98S23HYNyTV2zXQRGKZs4Wjok";
     private static final String RANGE = "Sheet1"; // Change according to your sheet
+    private static final Logger logger = LogManager.getLogger(GoogleSheetReader.class);
+
 
     // Write data to Google Sheet
     public void writeToSheet(Map<String, String> data) throws IOException, GeneralSecurityException {
@@ -25,7 +29,7 @@ public class GoogleSheetsWriter {
                 .append(SPREADSHEET_ID, RANGE, body)
                 .setValueInputOption("RAW")
                 .execute();
-        System.out.printf("%d cells updated.", result.getUpdates().getUpdatedCells());
+        logger.info("%d cells updated.", result.getUpdates().getUpdatedCells());
     }
 
     // Convert Map data to ValueRange
