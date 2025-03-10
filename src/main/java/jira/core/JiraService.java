@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gSheet.GoogleSheetReader;
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import util.ConfigReader;
@@ -22,22 +23,60 @@ public class JiraService {
     private static String getJiraContent(String JiraId) {
         // Set base URI
         RestAssured.baseURI = "https://borobudur.atlassian.net/rest/api/3";
+
         // Authorization token
-        String authToken = getAuthToken();//"cmFrZXNoLnNpbmdoQHRpa2V0LmNvbTpBVEFUVDN4RmZHRjBoSlNjRXIzajdrYWtpSFZlb3FjRVZQSk5nWUFCby02NVVUUVBjbVlWUHE2b1Ytd2M4eV80WnlVcUJYN2RsSWpwaC1GS1ZsVFJMYVQzYlhHNWZFbnlLcmFEdl90WFFiM1FFT3lGbi1ZcDdUMGZfOGNPZlJUX0FHX0FVZ09sSXZ6aVhGTzBMYmhLZEQ1RUloOWJyUVRFcmFDZTRPZy1KRHJYZkprbGNaREdzVk09OEIxNzUyNzM=";
+        String authToken = getAuthToken();
         if (authToken == null || authToken.isEmpty()) {
-            throw new IllegalArgumentException("Missing or empty Jira Auth token key :" + authToken);
+            throw new IllegalArgumentException("Missing or empty Jira Auth token key: " + authToken);
         }
-        // Send request and get response
-        return RestAssured.given().log().all()
-                .header("singleRequest.Content-Type", "application/json")
-                .header("Accept", "application/json")
-                .header("Authorization", "Basic " + authToken)
-                .header("Cookie", "atlassian.xsrf.token=dfadd0249b3f13070f62043f3746fe5e4fb843c5_lin")
-                .body("{\"fields\": [\"description\"]}")
-                .when()
-                .get("/issue/" + JiraId + "")
-                .then().log().all()
-                .extract().response().asString();
+
+        int maxAttempts = 3;
+        int delay = 2000; // Start with 2 seconds
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                // Send API request without body or cookie
+                Response response = RestAssured.given()
+                        .log().all()
+                        .header("Content-Type", "application/json")
+                        .header("Accept", "application/json")
+                        .header("Authorization", "Basic " + authToken)
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0")
+                        .when()
+                        .get("/issue/" + JiraId + "?fields=description")
+                        .then()
+                        .log().all()
+                        .extract()
+                        .response();
+
+                int statusCode = response.getStatusCode();
+
+                if (statusCode == 403) {
+                    System.out.println("❌ Received 403 Forbidden. Attempt " + attempt + " of " + maxAttempts);
+                    if (attempt == maxAttempts) {
+                        System.out.println("❌ Maximum attempts reached. Skipping this Jira ID: " + JiraId);
+                        return null;
+                    }
+                    // Exponential backoff delay
+                    Thread.sleep(delay);
+                    delay *= 2;
+                } else if (statusCode == 200) {
+                    System.out.println("✅ Successfully fetched requirement for: " + JiraId);
+                    return response.asString();
+                } else {
+                    System.out.println("❌ Unexpected status code: " + statusCode);
+                    return null;
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("❌ Thread interrupted.");
+                return null;
+            } catch (Exception e) {
+                System.out.println("❌ Failed due to: " + e.getMessage());
+                return null;
+            }
+        }
+        return null;
     }
 
     private static String getAuthToken() {
